@@ -1,47 +1,46 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <unistd.h>
+#include <pthread.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/syscall.h>
+#include <omp.h>
 
-#define SUDOKU_SIZE 9
+#define SIZE 9
 
-int sudoku[SUDOKU_SIZE][SUDOKU_SIZE];
+int sudoku[9][9];
 
-// Funcion para validar si una fila contiene los numeros del 1 al 9
+// Función para verificar si una fila contiene los números 1-9
 void* validar_filas(void* arg) {
-    int i, j, k;
-    int* fila = (int*) arg;
-    int* numeros = (int*) calloc(SUDOKU_SIZE, sizeof(int));
-
-    for (i = 0; i < SUDOKU_SIZE; i++) {
-        k = fila[i];
-        if (numeros[k] == 1) {
-            return (void*) 0;
+    for (int i = 0; i < SIZE; i++) {
+        int check[SIZE] = {0};
+        for (int j = 0; j < SIZE; j++) {
+            if (check[sudoku[i][j] - 1] == 1) return (void*)0;
+            check[sudoku[i][j] - 1] = 1;
         }
-        numeros[k] = 1;
     }
-
-    return (void*) 1;
+    return (void*)1;
 }
 
-// Funcion para validar si una columna contiene los numeros del 1 al 9
+// Función para verificar si una columna contiene los números 1-9
 void* validar_columnas(void* arg) {
-    int i, j, k;
-    int* columna = (int*) arg;
-    int* numeros = (int*) calloc(SUDOKU_SIZE, sizeof(int));
-
-    for (i = 0; i < SUDOKU_SIZE; i++) {
-        k = columna[i];
-        if (numeros[k] == 1) {
-            return (void*) 0;
+    printf("Thread de columnas ID: %ld\n", syscall(SYS_gettid));
+    for (int j = 0; j < SIZE; j++) {
+        int check[SIZE] = {0};
+        for (int i = 0; i < SIZE; i++) {
+            if (check[sudoku[i][j] - 1] == 1) return (void*)0;
+            check[sudoku[i][j] - 1] = 1;
         }
-        numeros[k] = 1;
     }
-
-    return (void*) 1;
+    return (void*)1;
 }
 
-// Funcion para validar si un cuadrante contiene los numeros del 1 al 9
-void* validar_submatriz(int row, int col){
-    int check[SUDOKU_SIZE] = {0};
+// Función para verificar una submatriz 3x3
+int validar_submatriz(int row, int col) {
+    int check[SIZE] = {0};
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             int num = sudoku[row + i][col + j];
@@ -51,3 +50,5 @@ void* validar_submatriz(int row, int col){
     }
     return 1;
 }
+
+
